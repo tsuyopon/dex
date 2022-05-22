@@ -34,6 +34,7 @@ func (s *Server) getDeviceVerificationURI() string {
 }
 
 func (s *Server) handleDeviceExchange(w http.ResponseWriter, r *http.Request) {
+	s.logger.Debug("/device requested. Enter handleDeviceExchange")
 	switch r.Method {
 	case http.MethodGet:
 		// Grab the parameter(s) from the query.
@@ -55,6 +56,7 @@ func (s *Server) handleDeviceExchange(w http.ResponseWriter, r *http.Request) {
 }
 
 func (s *Server) handleDeviceCode(w http.ResponseWriter, r *http.Request) {
+	s.logger.Debug("/device/code requested. Enter handleDeviceCode")
 	pollIntervalSeconds := 5
 
 	switch r.Method {
@@ -152,6 +154,7 @@ func (s *Server) handleDeviceCode(w http.ResponseWriter, r *http.Request) {
 }
 
 func (s *Server) handleDeviceToken(w http.ResponseWriter, r *http.Request) {
+	s.logger.Debug("/device/token requested. Enter handleDeviceToken")
 	w.Header().Set("Content-Type", "application/json")
 	switch r.Method {
 	case http.MethodPost:
@@ -336,6 +339,7 @@ func (s *Server) handleDeviceCallback(w http.ResponseWriter, r *http.Request) {
 }
 
 func (s *Server) verifyUserCode(w http.ResponseWriter, r *http.Request) {
+	s.logger.Debug("/device/auth/verify_code requested. Enter verifyUserCode")
 	switch r.Method {
 	case http.MethodPost:
 		err := r.ParseForm()

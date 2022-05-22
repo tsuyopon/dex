@@ -1,11 +1,12 @@
 issuer: http://127.0.0.1:5556/dex
 
+# storageにはmemory, sqlite
 storage:
   type: sqlite3
   config:
     file: examples/dex.db
 
-# Configuration for the HTTP endpoints.
+# HTTPエンドポイントの設定(HTTPSも可能)
 web:
   http: 0.0.0.0:5556
 
@@ -16,13 +17,14 @@ staticClients:
   name: 'Example App'
   secret: skes5xvkplk6vtfnj4unlxldvszxj5ao367qri3eahsn6hwszq
 
+# GRPC APIの設定
 grpc:
   addr: 127.0.0.1:5557
   tlsCert: server.crt
   tlsKey: server.key
   tlsClientCA: ca.crt
 
-# Configuration for telemetry
+# Configuration for telemetry (/metrics, /healthz, /healthz/live, /healthz/ready などの監視・metricsエンドポイントの提供)
 telemetry:
   http: 0.0.0.0:5558
 
@@ -30,9 +32,12 @@ logger:
   level: "debug"
   format: "text" # can also be "json"
 
-#oauth2:
+# responseTypeとscopeに関係がある
+#   see: https://qiita.com/TakahikoKawasaki/items/4ee9b55db9f7ef352b47
+oauth2:
+  # response_typeが指定された場合には以下のいずれかにマッチしない場合には未サポート扱いでエラーとなる
+  responseTypes: ["code", "token", "id_token"]
 #  skipApprovalScreen: true
-#  responseTypes: ["id_token"]
 
 frontend:
   issuer: dex

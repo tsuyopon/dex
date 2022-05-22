@@ -44,6 +44,7 @@ type Callback struct {
 
 // LoginURL returns the URL to redirect the user to login with.
 func (m *Callback) LoginURL(s connector.Scopes, callbackURL, state string) (string, error) {
+	m.Logger.Debug("connectortest.go LoginURL")
 	u, err := url.Parse(callbackURL)
 	if err != nil {
 		return "", fmt.Errorf("failed to parse callbackURL %q: %v", callbackURL, err)
@@ -58,11 +59,13 @@ var connectorData = []byte("foobar")
 
 // HandleCallback parses the request and returns the user's identity
 func (m *Callback) HandleCallback(s connector.Scopes, r *http.Request) (connector.Identity, error) {
+	m.Logger.Debug("connectortest.go HandleCallback")
 	return m.Identity, nil
 }
 
 // Refresh updates the identity during a refresh token request.
 func (m *Callback) Refresh(ctx context.Context, s connector.Scopes, identity connector.Identity) (connector.Identity, error) {
+	m.Logger.Debug("connectortest.go Refresh")
 	return m.Identity, nil
 }
 
@@ -71,6 +74,7 @@ type CallbackConfig struct{}
 
 // Open returns an authentication strategy which requires no user interaction.
 func (c *CallbackConfig) Open(id string, logger log.Logger) (connector.Connector, error) {
+	logger.Debug("connectortest.go Open")
 	return NewCallbackConnector(logger), nil
 }
 
@@ -83,6 +87,7 @@ type PasswordConfig struct {
 
 // Open returns an authentication strategy which prompts for a predefined username and password.
 func (c *PasswordConfig) Open(id string, logger log.Logger) (connector.Connector, error) {
+	logger.Debug("connectortest.go Open")
 	if c.Username == "" {
 		return nil, errors.New("no username supplied")
 	}
@@ -98,9 +103,13 @@ type passwordConnector struct {
 	logger   log.Logger
 }
 
-func (p passwordConnector) Close() error { return nil }
+func (p passwordConnector) Close() error { 
+	p.logger.Debug("connectortest.go Close")
+	return nil
+}
 
 func (p passwordConnector) Login(ctx context.Context, s connector.Scopes, username, password string) (identity connector.Identity, validPassword bool, err error) {
+	p.logger.Debug("connectortest.go Login")
 	if username == p.username && password == p.password {
 		return connector.Identity{
 			UserID:        "0-385-28089-0",
@@ -112,8 +121,12 @@ func (p passwordConnector) Login(ctx context.Context, s connector.Scopes, userna
 	return identity, false, nil
 }
 
-func (p passwordConnector) Prompt() string { return "" }
+func (p passwordConnector) Prompt() string {
+	p.logger.Debug("connectortest.go Prompt")
+	return ""
+}
 
 func (p passwordConnector) Refresh(_ context.Context, _ connector.Scopes, identity connector.Identity) (connector.Identity, error) {
+	p.logger.Debug("connectortest.go Refresh")
 	return identity, nil
 }

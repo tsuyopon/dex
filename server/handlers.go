@@ -29,6 +29,8 @@ const (
 )
 
 func (s *Server) handlePublicKeys(w http.ResponseWriter, r *http.Request) {
+
+	s.logger.Debug("/keys requested. Enter handlePublicKeys")
 	// TODO(ericchiang): Cache this.
 	keys, err := s.storage.GetKeys()
 	if err != nil {
@@ -124,6 +126,7 @@ func (s *Server) discoveryHandler() (http.HandlerFunc, error) {
 
 // handleAuthorization handles the OAuth2 auth endpoint.
 func (s *Server) handleAuthorization(w http.ResponseWriter, r *http.Request) {
+	s.logger.Debug("/auth requested. Enter handleAuthorization")
 	authReq, err := s.parseAuthorizationRequest(r)
 	if err != nil {
 		s.logger.Errorf("Failed to parse authorization request: %v", err)
@@ -203,6 +206,7 @@ func (s *Server) handleAuthorization(w http.ResponseWriter, r *http.Request) {
 }
 
 func (s *Server) handleConnectorLogin(w http.ResponseWriter, r *http.Request) {
+	s.logger.Debug("/auth/{connector} requested. Enter handleConnectorLogin")
 	connID := mux.Vars(r)["connector"]
 	conn, err := s.getConnector(connID)
 	if err != nil {
@@ -325,6 +329,7 @@ func (s *Server) handleConnectorLogin(w http.ResponseWriter, r *http.Request) {
 }
 
 func (s *Server) handleConnectorCallback(w http.ResponseWriter, r *http.Request) {
+	s.logger.Debug("/callback/{connector} requested. Enter handleConnectorCallback")
 	var authID string
 	switch r.Method {
 	case http.MethodGet: // OAuth2 callback
@@ -479,6 +484,7 @@ func (s *Server) finalizeLogin(identity connector.Identity, authReq storage.Auth
 }
 
 func (s *Server) handleApproval(w http.ResponseWriter, r *http.Request) {
+	s.logger.Debug("/approval requsted. Enter handleApproval")
 	authReq, err := s.storage.GetAuthRequest(r.FormValue("req"))
 	if err != nil {
 		s.logger.Errorf("Failed to get auth request: %v", err)
@@ -653,6 +659,7 @@ func (s *Server) sendCodeResponse(w http.ResponseWriter, r *http.Request, authRe
 }
 
 func (s *Server) handleToken(w http.ResponseWriter, r *http.Request) {
+	s.logger.Debug("/token requested. Enter handleToken")
 	clientID, clientSecret, ok := r.BasicAuth()
 	if ok {
 		var err error
@@ -1120,6 +1127,7 @@ func (s *Server) handleRefreshToken(w http.ResponseWriter, r *http.Request, clie
 }
 
 func (s *Server) handleUserInfo(w http.ResponseWriter, r *http.Request) {
+	s.logger.Debug("/userinfo requested. Enter handleUserInfo")
 	const prefix = "Bearer "
 
 	auth := r.Header.Get("authorization")

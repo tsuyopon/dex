@@ -426,6 +426,7 @@ func (s *Server) parseAuthorizationRequest(r *http.Request) (*storage.AuthReques
 
 	codeChallenge := q.Get("code_challenge")
 	codeChallengeMethod := q.Get("code_challenge_method")
+	s.logger.Debugf("clientID: %s, state: %s, nonce: %s, connectorID: %s, scopes: %s, response_type: %s, code_challenge: %s, code_challenge_method: %s", clientID, state, nonce, connectorID, scopes, responseTypes, codeChallenge, codeChallengeMethod)
 
 	if codeChallengeMethod == "" {
 		codeChallengeMethod = CodeChallengeMethodPlain
@@ -518,6 +519,8 @@ func (s *Server) parseAuthorizationRequest(r *http.Request) (*storage.AuthReques
 	}
 
 	for _, responseType := range responseTypes {
+		s.logger.Debugf("response_type: %s", responseType)
+
 		switch responseType {
 		case responseTypeCode:
 			rt.code = true
@@ -529,10 +532,12 @@ func (s *Server) parseAuthorizationRequest(r *http.Request) (*storage.AuthReques
 			return nil, newErr(errInvalidRequest, "Invalid response type %q", responseType)
 		}
 
+		// yaml中に指定されたresponse_typeが設定されていない場合には未サポートとしてエラーにする
 		if !s.supportedResponseTypes[responseType] {
 			return nil, newErr(errUnsupportedResponseType, "Unsupported response type %q", responseType)
 		}
 	}
+	s.logger.Debug("clear")
 
 	if len(responseTypes) == 0 {
 		return nil, newErr(errInvalidRequest, "No response_type provided")

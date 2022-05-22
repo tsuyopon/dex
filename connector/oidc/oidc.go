@@ -99,6 +99,9 @@ func knownBrokenAuthHeaderProvider(issuerURL string) bool {
 // Open returns a connector which can be used to login users through an upstream
 // OpenID Connect provider.
 func (c *Config) Open(id string, logger log.Logger) (conn connector.Connector, err error) {
+
+	logger.Debug("oidc.go Open")
+
 	ctx, cancel := context.WithCancel(context.Background())
 
 	provider, err := oidc.NewProvider(ctx, c.Issuer)
@@ -184,11 +187,14 @@ type oidcConnector struct {
 }
 
 func (c *oidcConnector) Close() error {
+	c.logger.Debug("oidc.go Close")
 	c.cancel()
 	return nil
 }
 
 func (c *oidcConnector) LoginURL(s connector.Scopes, callbackURL, state string) (string, error) {
+
+	c.logger.Debug("oidc.go LoginURL")
 	if c.redirectURI != callbackURL {
 		return "", fmt.Errorf("expected callback URL %q did not match the URL in the config %q", callbackURL, c.redirectURI)
 	}
@@ -235,6 +241,7 @@ func (c *oidcConnector) HandleCallback(s connector.Scopes, r *http.Request) (ide
 
 // Refresh is used to refresh a session with the refresh token provided by the IdP
 func (c *oidcConnector) Refresh(ctx context.Context, s connector.Scopes, identity connector.Identity) (connector.Identity, error) {
+	c.logger.Debug("oidc.go Refresh")
 	cd := connectorData{}
 	err := json.Unmarshal(identity.ConnectorData, &cd)
 	if err != nil {
@@ -254,6 +261,7 @@ func (c *oidcConnector) Refresh(ctx context.Context, s connector.Scopes, identit
 }
 
 func (c *oidcConnector) createIdentity(ctx context.Context, identity connector.Identity, token *oauth2.Token) (connector.Identity, error) {
+	c.logger.Debug("oidc.go createIdentity")
 	rawIDToken, ok := token.Extra("id_token").(string)
 	if !ok {
 		return identity, errors.New("oidc: no id_token in token response")
