@@ -88,6 +88,7 @@ type discovery struct {
 }
 
 func (s *Server) discoveryHandler() (http.HandlerFunc, error) {
+	s.logger.Debug("discoveryHandler")
 	d := discovery{
 		Issuer:            s.issuerURL.String(),
 		Auth:              s.absURL("/auth"),
@@ -249,8 +250,10 @@ func (s *Server) handleConnectorLogin(w http.ResponseWriter, r *http.Request) {
 
 	switch r.Method {
 	case http.MethodGet:
+		s.logger.Debug("CASE: http.MethodGet selected")
 		switch conn := conn.Connector.(type) {
 		case connector.CallbackConnector:
+			s.logger.Debug("case connector.CallbackConnector selected")
 			// Use the auth request ID as the "state" token.
 			//
 			// TODO(ericchiang): Is this appropriate or should we also be using a nonce?
@@ -262,10 +265,12 @@ func (s *Server) handleConnectorLogin(w http.ResponseWriter, r *http.Request) {
 			}
 			http.Redirect(w, r, callbackURL, http.StatusFound)
 		case connector.PasswordConnector:
+			s.logger.Debug("case connector.PasswordConnector selected")
 			if err := s.templates.password(r, w, r.URL.String(), "", usernamePrompt(conn), false, showBacklink); err != nil {
 				s.logger.Errorf("Server template error: %v", err)
 			}
 		case connector.SAMLConnector:
+			s.logger.Debug("case connector.SAMLConnector selected")
 			action, value, err := conn.POSTData(scopes, authReqID)
 			if err != nil {
 				s.logger.Errorf("Creating SAML data: %v", err)
@@ -294,6 +299,7 @@ func (s *Server) handleConnectorLogin(w http.ResponseWriter, r *http.Request) {
 			s.renderError(r, w, http.StatusBadRequest, "Requested resource does not exist.")
 		}
 	case http.MethodPost:
+		s.logger.Debug("CASE: http.MethodPost")
 		passwordConnector, ok := conn.Connector.(connector.PasswordConnector)
 		if !ok {
 			s.renderError(r, w, http.StatusBadRequest, "Requested resource does not exist.")
@@ -412,6 +418,7 @@ func (s *Server) handleConnectorCallback(w http.ResponseWriter, r *http.Request)
 // finalizeLogin associates the user's identity with the current AuthRequest, then returns
 // the approval page's path.
 func (s *Server) finalizeLogin(identity connector.Identity, authReq storage.AuthRequest, conn connector.Connector) (string, error) {
+	s.logger.Debug("finalizeLogin")
 	claims := storage.Claims{
 		UserID:            identity.UserID,
 		Username:          identity.Username,
@@ -514,14 +521,17 @@ func (s *Server) handleApproval(w http.ResponseWriter, r *http.Request) {
 		}
 	case http.MethodPost:
 		if r.FormValue("approval") != "approve" {
+			s.logger.Debug("/approval rejected")
 			s.renderError(r, w, http.StatusInternalServerError, "Approval rejected.")
 			return
 		}
+		s.logger.Debug("/approval response")
 		s.sendCodeResponse(w, r, authReq)
 	}
 }
 
 func (s *Server) sendCodeResponse(w http.ResponseWriter, r *http.Request, authReq storage.AuthRequest) {
+	s.logger.Debug("sendCodeResponse")
 	if s.now().After(authReq.Expiry) {
 		s.renderError(r, w, http.StatusBadRequest, "User session has expired.")
 		return
@@ -610,7 +620,9 @@ func (s *Server) sendCodeResponse(w http.ResponseWriter, r *http.Request, authRe
 		}
 	}
 
+	// response_typeに設定された値によって処理が分岐する。
 	if implicitOrHybrid {
+		s.logger.Debug("implicitOrHybrid entered")
 		v := url.Values{}
 		v.Set("access_token", accessToken)
 		v.Set("token_type", "bearer")
@@ -642,6 +654,7 @@ func (s *Server) sendCodeResponse(w http.ResponseWriter, r *http.Request, authRe
 		//
 		u.Fragment = v.Encode()
 	} else {
+		s.logger.Debug("Authorization Code Flow entered")
 		// The code flow add values to the URL query.
 		//
 		//   HTTP/1.1 303 See Other
@@ -655,6 +668,7 @@ func (s *Server) sendCodeResponse(w http.ResponseWriter, r *http.Request, authRe
 		u.RawQuery = q.Encode()
 	}
 
+	s.logger.Debug("HTTP Redirect: ", u.String())
 	http.Redirect(w, r, u.String(), http.StatusSeeOther)
 }
 
@@ -696,6 +710,7 @@ func (s *Server) handleToken(w http.ResponseWriter, r *http.Request) {
 		return
 	}
 
+	// OAuth2.0認可タイプに応じた処理を行う。code, refresh_token, password
 	grantType := r.PostFormValue("grant_type")
 	switch grantType {
 	case grantTypeAuthorizationCode:
@@ -710,6 +725,7 @@ func (s *Server) handleToken(w http.ResponseWriter, r *http.Request) {
 }
 
 func (s *Server) calculateCodeChallenge(codeVerifier, codeChallengeMethod string) (string, error) {
+	s.logger.Debug("calculateCodeChallenge")
 	switch codeChallengeMethod {
 	case CodeChallengeMethodPlain:
 		return codeVerifier, nil
@@ -723,6 +739,7 @@ func (s *Server) calculateCodeChallenge(codeVerifier, codeChallengeMethod string
 
 // handle an access token request https://tools.ietf.org/html/rfc6749#section-4.1.3
 func (s *Server) handleAuthCode(w http.ResponseWriter, r *http.Request, client storage.Client) {
+	s.logger.Debug("handleAuthCode")
 	code := r.PostFormValue("code")
 	redirectURI := r.PostFormValue("redirect_uri")
 
@@ -782,6 +799,7 @@ func (s *Server) handleAuthCode(w http.ResponseWriter, r *http.Request, client s
 }
 
 func (s *Server) exchangeAuthCode(w http.ResponseWriter, authCode storage.AuthCode, client storage.Client) (*accessTokenResponse, error) {
+	s.logger.Debug("exchangeAuthCode")
 	accessToken, err := s.newAccessToken(client.ID, authCode.Claims, authCode.Scopes, authCode.Nonce, authCode.ConnectorID)
 	if err != nil {
 		s.logger.Errorf("failed to create new access token: %v", err)
@@ -928,6 +946,7 @@ func (s *Server) exchangeAuthCode(w http.ResponseWriter, authCode storage.AuthCo
 
 // handle a refresh token request https://tools.ietf.org/html/rfc6749#section-6
 func (s *Server) handleRefreshToken(w http.ResponseWriter, r *http.Request, client storage.Client) {
+	s.logger.Debug("handleRefreshToken")
 	code := r.PostFormValue("refresh_token")
 	scope := r.PostFormValue("scope")
 	if code == "" {
@@ -1126,6 +1145,7 @@ func (s *Server) handleRefreshToken(w http.ResponseWriter, r *http.Request, clie
 	s.writeAccessToken(w, resp)
 }
 
+// /userinfoハンドラの定義
 func (s *Server) handleUserInfo(w http.ResponseWriter, r *http.Request) {
 	s.logger.Debug("/userinfo requested. Enter handleUserInfo")
 	const prefix = "Bearer "
@@ -1156,6 +1176,7 @@ func (s *Server) handleUserInfo(w http.ResponseWriter, r *http.Request) {
 }
 
 func (s *Server) handlePasswordGrant(w http.ResponseWriter, r *http.Request, client storage.Client) {
+	s.logger.Debug("handlePasswordGrant")
 	// Parse the fields
 	if err := r.ParseForm(); err != nil {
 		s.tokenErrHelper(w, errInvalidRequest, "Couldn't parse data", http.StatusBadRequest)
@@ -1174,6 +1195,7 @@ func (s *Server) handlePasswordGrant(w http.ResponseWriter, r *http.Request, cli
 	)
 	hasOpenIDScope := false
 	for _, scope := range scopes {
+		s.logger.Debugf("scope: %s", scope)
 		switch scope {
 		case scopeOpenID:
 			hasOpenIDScope = true
@@ -1223,6 +1245,7 @@ func (s *Server) handlePasswordGrant(w http.ResponseWriter, r *http.Request, cli
 	}
 
 	// Login
+	s.logger.Debugf("Login check start")
 	username := q.Get("username")
 	password := q.Get("password")
 	identity, ok, err := passwordConnector.Login(r.Context(), parseScopes(scopes), username, password)
@@ -1385,6 +1408,7 @@ type accessTokenResponse struct {
 }
 
 func (s *Server) toAccessTokenResponse(idToken, accessToken, refreshToken string, expiry time.Time) *accessTokenResponse {
+	s.logger.Debug("toAccessTokenResponse")
 	return &accessTokenResponse{
 		accessToken,
 		"bearer",
@@ -1395,6 +1419,7 @@ func (s *Server) toAccessTokenResponse(idToken, accessToken, refreshToken string
 }
 
 func (s *Server) writeAccessToken(w http.ResponseWriter, resp *accessTokenResponse) {
+	s.logger.Debug("writeAccessToken")
 	data, err := json.Marshal(resp)
 	if err != nil {
 		s.logger.Errorf("failed to marshal access token response: %v", err)
@@ -1411,12 +1436,14 @@ func (s *Server) writeAccessToken(w http.ResponseWriter, resp *accessTokenRespon
 }
 
 func (s *Server) renderError(r *http.Request, w http.ResponseWriter, status int, description string) {
+	s.logger.Debugf("renderError. resp=%s", description)
 	if err := s.templates.err(r, w, status, description); err != nil {
 		s.logger.Errorf("Server template error: %v", err)
 	}
 }
 
 func (s *Server) tokenErrHelper(w http.ResponseWriter, typ string, description string, statusCode int) {
+	s.logger.Debugf("tokenErrHelper . resp=%s", description)
 	if err := tokenErr(w, typ, description, statusCode); err != nil {
 		s.logger.Errorf("token error response: %v", err)
 	}
