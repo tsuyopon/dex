@@ -20,6 +20,7 @@ type Config struct {
 
 // Open returns an authentication strategy which requires no user interaction.
 func (c *Config) Open(id string, logger log.Logger) (connector.Connector, error) {
+	logger.Debug("Open in oidc.go")
 	userHeader := c.UserHeader
 	if userHeader == "" {
 		userHeader = "X-Remote-User"
@@ -38,6 +39,7 @@ type callback struct {
 
 // LoginURL returns the URL to redirect the user to login with.
 func (m *callback) LoginURL(s connector.Scopes, callbackURL, state string) (string, error) {
+	m.logger.Debug("LoginURL in oidc.go")
 	u, err := url.Parse(callbackURL)
 	if err != nil {
 		return "", fmt.Errorf("failed to parse callbackURL %q: %v", callbackURL, err)
@@ -51,6 +53,7 @@ func (m *callback) LoginURL(s connector.Scopes, callbackURL, state string) (stri
 
 // HandleCallback parses the request and returns the user's identity
 func (m *callback) HandleCallback(s connector.Scopes, r *http.Request) (connector.Identity, error) {
+	m.logger.Debug("HandleCallback in oidc.go")
 	remoteUser := r.Header.Get(m.userHeader)
 	if remoteUser == "" {
 		return connector.Identity{}, fmt.Errorf("required HTTP header %s is not set", m.userHeader)

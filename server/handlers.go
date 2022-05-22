@@ -87,6 +87,7 @@ type discovery struct {
 	Claims            []string `json:"claims_supported"`
 }
 
+// /.well-known/openid-configuration APIハンドラの定義
 func (s *Server) discoveryHandler() (http.HandlerFunc, error) {
 	s.logger.Debug("discoveryHandler")
 	d := discovery{
@@ -125,6 +126,7 @@ func (s *Server) discoveryHandler() (http.HandlerFunc, error) {
 	}), nil
 }
 
+// /auth ハンドラの定義
 // handleAuthorization handles the OAuth2 auth endpoint.
 func (s *Server) handleAuthorization(w http.ResponseWriter, r *http.Request) {
 	s.logger.Debug("/auth requested. Enter handleAuthorization")
@@ -206,6 +208,7 @@ func (s *Server) handleAuthorization(w http.ResponseWriter, r *http.Request) {
 	}
 }
 
+// /auth/{connector} ハンドラの定義
 func (s *Server) handleConnectorLogin(w http.ResponseWriter, r *http.Request) {
 	s.logger.Debug("/auth/{connector} requested. Enter handleConnectorLogin")
 	connID := mux.Vars(r)["connector"]
@@ -334,6 +337,7 @@ func (s *Server) handleConnectorLogin(w http.ResponseWriter, r *http.Request) {
 	}
 }
 
+// /callback/{connector} ハンドラの定義
 func (s *Server) handleConnectorCallback(w http.ResponseWriter, r *http.Request) {
 	s.logger.Debug("/callback/{connector} requested. Enter handleConnectorCallback")
 	var authID string
@@ -490,6 +494,7 @@ func (s *Server) finalizeLogin(identity connector.Identity, authReq storage.Auth
 	return returnURL, nil
 }
 
+// /approvalハンドラの定義
 func (s *Server) handleApproval(w http.ResponseWriter, r *http.Request) {
 	s.logger.Debug("/approval requsted. Enter handleApproval")
 	authReq, err := s.storage.GetAuthRequest(r.FormValue("req"))
@@ -530,6 +535,7 @@ func (s *Server) handleApproval(w http.ResponseWriter, r *http.Request) {
 	}
 }
 
+//  /approvalから認可された場合に呼び出されるハンドラ
 func (s *Server) sendCodeResponse(w http.ResponseWriter, r *http.Request, authReq storage.AuthRequest) {
 	s.logger.Debug("sendCodeResponse")
 	if s.now().After(authReq.Expiry) {
@@ -672,6 +678,7 @@ func (s *Server) sendCodeResponse(w http.ResponseWriter, r *http.Request, authRe
 	http.Redirect(w, r, u.String(), http.StatusSeeOther)
 }
 
+// /token APIのハンドラ
 func (s *Server) handleToken(w http.ResponseWriter, r *http.Request) {
 	s.logger.Debug("/token requested. Enter handleToken")
 	clientID, clientSecret, ok := r.BasicAuth()
@@ -1145,7 +1152,7 @@ func (s *Server) handleRefreshToken(w http.ResponseWriter, r *http.Request, clie
 	s.writeAccessToken(w, resp)
 }
 
-// /userinfoハンドラの定義
+// /userinfo APIのハンドラの定義
 func (s *Server) handleUserInfo(w http.ResponseWriter, r *http.Request) {
 	s.logger.Debug("/userinfo requested. Enter handleUserInfo")
 	const prefix = "Bearer "

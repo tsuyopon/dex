@@ -100,7 +100,7 @@ func knownBrokenAuthHeaderProvider(issuerURL string) bool {
 // OpenID Connect provider.
 func (c *Config) Open(id string, logger log.Logger) (conn connector.Connector, err error) {
 
-	logger.Debug("oidc.go Open")
+	logger.Debug("Open in oidc.go")
 
 	ctx, cancel := context.WithCancel(context.Background())
 
@@ -187,14 +187,14 @@ type oidcConnector struct {
 }
 
 func (c *oidcConnector) Close() error {
-	c.logger.Debug("oidc.go Close")
+	c.logger.Debug("Close in oidc.go")
 	c.cancel()
 	return nil
 }
 
 func (c *oidcConnector) LoginURL(s connector.Scopes, callbackURL, state string) (string, error) {
 
-	c.logger.Debug("oidc.go LoginURL")
+	c.logger.Debug("LoginURL in oidc.go")
 	if c.redirectURI != callbackURL {
 		return "", fmt.Errorf("expected callback URL %q did not match the URL in the config %q", callbackURL, c.redirectURI)
 	}
@@ -227,6 +227,7 @@ func (e *oauth2Error) Error() string {
 }
 
 func (c *oidcConnector) HandleCallback(s connector.Scopes, r *http.Request) (identity connector.Identity, err error) {
+	c.logger.Debug("HandleCallback in oidc.go")
 	q := r.URL.Query()
 	if errType := q.Get("error"); errType != "" {
 		return identity, &oauth2Error{errType, q.Get("error_description")}
@@ -241,7 +242,7 @@ func (c *oidcConnector) HandleCallback(s connector.Scopes, r *http.Request) (ide
 
 // Refresh is used to refresh a session with the refresh token provided by the IdP
 func (c *oidcConnector) Refresh(ctx context.Context, s connector.Scopes, identity connector.Identity) (connector.Identity, error) {
-	c.logger.Debug("oidc.go Refresh")
+	c.logger.Debug("Refresh in oidc.go")
 	cd := connectorData{}
 	err := json.Unmarshal(identity.ConnectorData, &cd)
 	if err != nil {
@@ -261,7 +262,7 @@ func (c *oidcConnector) Refresh(ctx context.Context, s connector.Scopes, identit
 }
 
 func (c *oidcConnector) createIdentity(ctx context.Context, identity connector.Identity, token *oauth2.Token) (connector.Identity, error) {
-	c.logger.Debug("oidc.go createIdentity")
+	c.logger.Debug("createIdentity in oidc.go")
 	rawIDToken, ok := token.Extra("id_token").(string)
 	if !ok {
 		return identity, errors.New("oidc: no id_token in token response")

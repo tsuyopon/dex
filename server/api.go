@@ -31,6 +31,7 @@ const (
 
 // NewAPI returns a server which implements the gRPC API interface.
 func NewAPI(s storage.Storage, logger log.Logger) api.DexServer {
+	logger.Debug("NewAPI in api.go")
 	return dexAPI{
 		s:      s,
 		logger: logger,
@@ -43,6 +44,7 @@ type dexAPI struct {
 }
 
 func (d dexAPI) CreateClient(ctx context.Context, req *api.CreateClientReq) (*api.CreateClientResp, error) {
+	d.logger.Debug("CreateClient in api.go")
 	if req.Client == nil {
 		return nil, errors.New("no client supplied")
 	}
@@ -77,6 +79,7 @@ func (d dexAPI) CreateClient(ctx context.Context, req *api.CreateClientReq) (*ap
 }
 
 func (d dexAPI) UpdateClient(ctx context.Context, req *api.UpdateClientReq) (*api.UpdateClientResp, error) {
+	d.logger.Debug("UpdateClient in api.go")
 	if req.Id == "" {
 		return nil, errors.New("update client: no client ID supplied")
 	}
@@ -107,6 +110,7 @@ func (d dexAPI) UpdateClient(ctx context.Context, req *api.UpdateClientReq) (*ap
 }
 
 func (d dexAPI) DeleteClient(ctx context.Context, req *api.DeleteClientReq) (*api.DeleteClientResp, error) {
+	d.logger.Debug("DeleteClient in api.go")
 	err := d.s.DeleteClient(req.Id)
 	if err != nil {
 		if err == storage.ErrNotFound {
@@ -135,6 +139,7 @@ func checkCost(hash []byte) error {
 }
 
 func (d dexAPI) CreatePassword(ctx context.Context, req *api.CreatePasswordReq) (*api.CreatePasswordResp, error) {
+	d.logger.Debug("CreatePassword in api.go")
 	if req.Password == nil {
 		return nil, errors.New("no password supplied")
 	}
@@ -167,6 +172,7 @@ func (d dexAPI) CreatePassword(ctx context.Context, req *api.CreatePasswordReq) 
 }
 
 func (d dexAPI) UpdatePassword(ctx context.Context, req *api.UpdatePasswordReq) (*api.UpdatePasswordResp, error) {
+	d.logger.Debug("UpdatePassword in api.go")
 	if req.Email == "" {
 		return nil, errors.New("no email supplied")
 	}
@@ -204,6 +210,7 @@ func (d dexAPI) UpdatePassword(ctx context.Context, req *api.UpdatePasswordReq) 
 }
 
 func (d dexAPI) DeletePassword(ctx context.Context, req *api.DeletePasswordReq) (*api.DeletePasswordResp, error) {
+	d.logger.Debug("DeletePassword in api.go")
 	if req.Email == "" {
 		return nil, errors.New("no email supplied")
 	}
@@ -220,6 +227,7 @@ func (d dexAPI) DeletePassword(ctx context.Context, req *api.DeletePasswordReq) 
 }
 
 func (d dexAPI) GetVersion(ctx context.Context, req *api.VersionReq) (*api.VersionResp, error) {
+	d.logger.Debug("GetVersion in api.go")
 	return &api.VersionResp{
 		Server: version.Version,
 		Api:    apiVersion,
@@ -227,6 +235,7 @@ func (d dexAPI) GetVersion(ctx context.Context, req *api.VersionReq) (*api.Versi
 }
 
 func (d dexAPI) ListPasswords(ctx context.Context, req *api.ListPasswordReq) (*api.ListPasswordResp, error) {
+	d.logger.Debug("ListPasswords in api.go")
 	passwordList, err := d.s.ListPasswords()
 	if err != nil {
 		d.logger.Errorf("api: failed to list passwords: %v", err)
@@ -249,6 +258,7 @@ func (d dexAPI) ListPasswords(ctx context.Context, req *api.ListPasswordReq) (*a
 }
 
 func (d dexAPI) VerifyPassword(ctx context.Context, req *api.VerifyPasswordReq) (*api.VerifyPasswordResp, error) {
+	d.logger.Debug("VerifyPassword in api.go")
 	if req.Email == "" {
 		return nil, errors.New("no email supplied")
 	}
@@ -280,6 +290,7 @@ func (d dexAPI) VerifyPassword(ctx context.Context, req *api.VerifyPasswordReq) 
 }
 
 func (d dexAPI) ListRefresh(ctx context.Context, req *api.ListRefreshReq) (*api.ListRefreshResp, error) {
+	d.logger.Debug("ListRefresh in api.go")
 	id := new(internal.IDTokenSubject)
 	if err := internal.Unmarshal(req.UserId, id); err != nil {
 		d.logger.Errorf("api: failed to unmarshal ID Token subject: %v", err)
@@ -314,6 +325,7 @@ func (d dexAPI) ListRefresh(ctx context.Context, req *api.ListRefreshReq) (*api.
 }
 
 func (d dexAPI) RevokeRefresh(ctx context.Context, req *api.RevokeRefreshReq) (*api.RevokeRefreshResp, error) {
+	d.logger.Debug("RevokeRefresh in api.go")
 	id := new(internal.IDTokenSubject)
 	if err := internal.Unmarshal(req.UserId, id); err != nil {
 		d.logger.Errorf("api: failed to unmarshal ID Token subject: %v", err)

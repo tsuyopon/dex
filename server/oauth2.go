@@ -285,11 +285,13 @@ type federatedIDClaims struct {
 }
 
 func (s *Server) newAccessToken(clientID string, claims storage.Claims, scopes []string, nonce, connID string) (accessToken string, err error) {
+	s.logger.Debug("newAccessToken in oauth2.go")
 	idToken, _, err := s.newIDToken(clientID, claims, scopes, nonce, storage.NewID(), "", connID)
 	return idToken, err
 }
 
 func (s *Server) newIDToken(clientID string, claims storage.Claims, scopes []string, nonce, accessToken, code, connID string) (idToken string, expiry time.Time, err error) {
+	s.logger.Debug("newIDToken in oauth2.go")
 	keys, err := s.storage.GetKeys()
 	if err != nil {
 		s.logger.Errorf("Failed to get keys: %v", err)
@@ -407,6 +409,7 @@ func (s *Server) newIDToken(clientID string, claims storage.Claims, scopes []str
 
 // parse the initial request from the OAuth2 client.
 func (s *Server) parseAuthorizationRequest(r *http.Request) (*storage.AuthRequest, error) {
+	s.logger.Debug("parseAuthorizationRequest in oauth2.go")
 	if err := r.ParseForm(); err != nil {
 		return nil, &authErr{"", "", errInvalidRequest, "Failed to parse request body."}
 	}
@@ -537,7 +540,6 @@ func (s *Server) parseAuthorizationRequest(r *http.Request) (*storage.AuthReques
 			return nil, newErr(errUnsupportedResponseType, "Unsupported response type %q", responseType)
 		}
 	}
-	s.logger.Debug("clear")
 
 	if len(responseTypes) == 0 {
 		return nil, newErr(errInvalidRequest, "No response_type provided")
@@ -590,6 +592,7 @@ func parseCrossClientScope(scope string) (peerID string, ok bool) {
 }
 
 func (s *Server) validateCrossClientTrust(clientID, peerID string) (trusted bool, err error) {
+	s.logger.Debug("validateCrossClientTrust in oauth2.go")
 	if peerID == clientID {
 		return true, nil
 	}
