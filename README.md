@@ -1,3 +1,14 @@
+# 概要
+dexのカスタムサンプルです。
+修正内容はv2.28.1を基にしています。
+
+# 変更点
+- テスト用のdb(sqlite3)の追加。テスト用ClientID, Secretの設定
+- コメントの追加
+- 設定ファイルの一部修正
+- ログの埋め込み
+
+----
 # dex - A federated OpenID Connect provider
 
 ![GitHub Workflow Status](https://img.shields.io/github/workflow/status/dexidp/dex/CI?style=flat-square)

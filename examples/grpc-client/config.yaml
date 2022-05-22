@@ -9,11 +9,36 @@ storage:
 web:
   http: 0.0.0.0:5556
 
+staticClients:
+- id: test1
+  redirectURIs:
+  - 'http://127.0.0.1:5555/callback'
+  name: 'Example App'
+  secret: skes5xvkplk6vtfnj4unlxldvszxj5ao367qri3eahsn6hwszq
+
 grpc:
   addr: 127.0.0.1:5557
   tlsCert: server.crt
   tlsKey: server.key
   tlsClientCA: ca.crt
+
+# Configuration for telemetry
+telemetry:
+  http: 0.0.0.0:5558
+
+logger:
+  level: "debug"
+  format: "text" # can also be "json"
+
+#oauth2:
+#  skipApprovalScreen: true
+#  responseTypes: ["id_token"]
+
+frontend:
+  issuer: dex
+  logoURL: theme/logo.png
+  dir: web/
+  theme: light
 
 connectors:
 - type: mockCallback
@@ -23,3 +48,9 @@ connectors:
 # Let dex keep a list of passwords which can be used to login to dex.
 enablePasswordDB: true
 
+staticPasswords:
+- email: "admin@example.com"
+  # bcrypt hash of the string "password"
+  hash: "$2a$10$2b2cU8CPhOTaGrs1HRQuAueS7JTT5ZHsHSzYiFPm1leZck7Mc8T4W"
+  username: "admin"
+  userID: "08a8684b-db88-4b73-90a9-3cd1661f5466"
